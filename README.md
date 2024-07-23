@@ -1,8 +1,10 @@
-# Soundboard+
+# SoundboardPlus
 
-Allows a user to upload extra files for use in voice calls similar to voice calls
+Allows a user to upload extra files for use in voice calls similar to discord's soundboard in voice calls.
 
 ## Important
+
+**DO NOT USE ON LARGER DISCORD SERVERS WITH PEOPLE WHO YOU DONT KNOW OR TRUST. THERE IS PROBABLY SOME WAY USERS CAN MODIFY OTHER FILES ON THE HOST COMPUTER**
 
 Requires ffmpeg to be installed
 
