@@ -4,7 +4,7 @@ from discord.ext.commands import Bot
 from discord.voice_client import VoiceClient
 import json
 import requests
-from os import path, makedirs
+from os import path, makedirs, remove
 import asyncio
 from pathlib import Path
 
@@ -34,11 +34,12 @@ def doesitexist(filepath, type):
 def mkdir(filepath):
     if not path.isdir(Path(filepath)):
         makedirs(Path(filepath))
-
-
 # Other functions
-@bot.command(brief='Stores attached audio for later use in soundboard',
-            description='Stores attached audio for later use in soundboard \n Can be played in current vc with the .play [soundname] command')
+
+# Add and remove sounds
+@bot.command(brief='Stores audio for later use in soundboard',
+            description='Stores attached audio for later use in soundboard with .play \nUsage: .addsound [soundname] [url (only if from youtube)] \nNote that sound names cannot contain spaces',
+            help="Stores audio for later use in soundboard.")
 async def addsound(ctx, name=""):
     print(ctx)
     print(ctx.message.attachments)
@@ -51,12 +52,25 @@ async def addsound(ctx, name=""):
             mkdir(path.join("resources", str(ctx.author)))
         down_path = path.join("resources", str(ctx.author), name)
         try:
-            savemp3(file, down_path)
+            if not "./.." in down_path:
+                savemp3(file, down_path)
+            else:
+                await ctx.send("Unexpected error occurred while saving file")
         except:
             await ctx.send("Unexpected error occurred while saving file")
 
+@bot.command(brief='Removes existing sounds from your library',
+            description='Removes existing sounds from your library',
+            help="Removes existing sounds from your sounds. Usage: .removesound [name]")
+async def removesound(ctx, name=""):
+    filepath = path.join("resources", str(ctx.author), name)
+    if not "./.." in filepath:
+        remove(filepath)
+    else:
+        await ctx.send("Failed to remove file")
 
-@bot.command(name='join', help='Tells the bot to join the voice channel')
+# manual join and leave
+@bot.command(name='join', help='gets the bot to join the current vc')
 async def join(ctx):
     if not ctx.message.author.voice:
         await ctx.send("{} is not connected to a voice channel".format(ctx.message.author.name))
@@ -67,14 +81,14 @@ async def join(ctx):
 
 @bot.command(name='stop', brief="Stops the bot and kicks it from the vc",
              description="Stops the bot and kicks it from the vc")
-async def leave(ctx):
+async def stop(ctx):
     voice_client = ctx.message.guild.voice_client
     if voice_client.is_connected():
         await voice_client.disconnect()
     else:
         await ctx.send("The bot is not connected to a voice channel.")
 
-@bot.command(name='play', help='Plays sound')
+@bot.command(name='play', help='Plays sound.', description="Usage: .play [soundname] [channelname (if needed)]")
 async def play(ctx, file="", custom_channel=""):
     try:
         if not ctx.message.author.voice:
@@ -92,7 +106,11 @@ async def play(ctx, file="", custom_channel=""):
         voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=filepath))
     else:
         await ctx.send("sound does not exist")
-
+    while voice_channel.is_playing():
+            await asyncio.sleep(1)
+    if voice_channel.is_connected():
+        await voice_channel.disconnect()
+    
 
 @bot.event
 async def on_ready():

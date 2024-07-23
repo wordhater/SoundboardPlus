@@ -10,4 +10,8 @@ Will only run on linux due to differences in how ffmpeg is loaded
 
 ## To Do:
 
-make the bot
+Warn users if the bot is already playing sounds
+
+Youtube link support
+
+join vc that message author is not in
