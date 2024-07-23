@@ -13,8 +13,16 @@ with open('config.json') as f:
 
 intents = discord.Intents.default()
 intents.message_content = True
+
 bot = commands.Bot(command_prefix=".", intents=intents)
 
+# Other functions
+
+def savemp3(file, path):
+    with open(path, 'wb') as fd:
+        fd.write(file.content)
+
+# Other functions
 @bot.command(brief='Stores attached audio for later use in soundboard',
             description='Stores attached audio for later use in soundboard \n Can be played in current vc with the .play [soundname] command')
 async def addsound(ctx, name=""):
@@ -25,15 +33,47 @@ async def addsound(ctx, name=""):
     else:
         await ctx.send("Processing files")
         file = requests.get(ctx.message.attachments[0])
-        down_path = path.join("resources", "download.mp3")
-        with open(down_path, 'wb') as fd:
-                fd.write(file.content)
+        down_path = path.join("resources", "")
+        try:
+            savemp3(file, down_path)
+        except:
+            await ctx.send("Unexpected error occurred while saving file")
 
-@bot.command(pass_context=True)
+
+@bot.command(name='join', help='Tells the bot to join the voice channel')
 async def join(ctx):
-    author = ctx.message.author
-    channel = author.voice_channel
-    await bot.join_voice_channel(channel)
+    if not ctx.message.author.voice:
+        await ctx.send("{} is not connected to a voice channel".format(ctx.message.author.name))
+        return
+    else:
+        channel = ctx.message.author.voice.channel
+    await channel.connect()
+
+@bot.command(name='stop', brief="Stops the bot and kicks it from the vc",
+             description="Stops the bot and kicks it from the vc")
+async def leave(ctx):
+    voice_client = ctx.message.guild.voice_client
+    if voice_client.is_connected():
+        await voice_client.disconnect()
+    else:
+        await ctx.send("The bot is not connected to a voice channel.")
+
+@bot.command(name='play', help='Plays sound')
+async def play(ctx, file="", custom_channel=""):
+    try:
+        if not ctx.message.author.voice:
+            await ctx.send("{} is not connected to a voice channel".format(ctx.message.author.name))
+            return
+        else:
+            channel = ctx.message.author.voice.channel
+            await channel.connect()
+    except:
+        print("failed to join vc or already in vc")
+    server = ctx.message.guild
+    voice_channel = server.voice_client
+    filepath = path.join("resources", 'download.mp3')
+    voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=filepath))
+
 
 @bot.event
 async def on_ready():
