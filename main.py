@@ -4,8 +4,9 @@ from discord.ext.commands import Bot
 from discord.voice_client import VoiceClient
 import json
 import requests
-from os import path
+from os import path, makedirs
 import asyncio
+from pathlib import Path
 
 with open('config.json') as f:
     vars = json.load(f)
@@ -22,6 +23,19 @@ def savemp3(file, path):
     with open(path, 'wb') as fd:
         fd.write(file.content)
 
+def doesitexist(filepath, type):
+    if type == 0:
+        if Path(filepath).is_file(): return True
+        else: return False
+    elif type == 1:
+        if Path(filepath).is_dir(): return True
+        else: return False
+
+def mkdir(filepath):
+    if not path.isdir(Path(filepath)):
+        makedirs(Path(filepath))
+
+
 # Other functions
 @bot.command(brief='Stores attached audio for later use in soundboard',
             description='Stores attached audio for later use in soundboard \n Can be played in current vc with the .play [soundname] command')
@@ -33,7 +47,9 @@ async def addsound(ctx, name=""):
     else:
         await ctx.send("Processing files")
         file = requests.get(ctx.message.attachments[0])
-        down_path = path.join("resources", "")
+        if not doesitexist(path.join("resources", str(ctx.author)), 1):
+            mkdir(path.join("resources", str(ctx.author)))
+        down_path = path.join("resources", str(ctx.author), name)
         try:
             savemp3(file, down_path)
         except:
@@ -71,8 +87,11 @@ async def play(ctx, file="", custom_channel=""):
         print("failed to join vc or already in vc")
     server = ctx.message.guild
     voice_channel = server.voice_client
-    filepath = path.join("resources", 'download.mp3')
-    voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=filepath))
+    filepath = path.join("resources", str(ctx.author), file)
+    if doesitexist(filepath, 0):
+        voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=filepath))
+    else:
+        await ctx.send("sound does not exist")
 
 
 @bot.event
