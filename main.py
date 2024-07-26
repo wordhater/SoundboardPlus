@@ -41,7 +41,7 @@ async def addsound(ctx, name=""):
     else:
         await ctx.send("Processing files")
         file = requests.get(ctx.message.attachments[0])
-        if not doesitexist(path.join("resources", str(ctx.author)), 1):
+        if not path_exists(path.join("resources", str(ctx.author))):
             mkdir(path.join("resources", str(ctx.author)))
         down_path = path.join("resources", str(ctx.author), name)
         try:
@@ -95,7 +95,7 @@ async def play(ctx, file="", custom_channel=""):
     server = ctx.message.guild
     voice_channel = server.voice_client
     filepath = path.join("resources", str(ctx.author), file)
-    if doesitexist(filepath, 0):
+    if path_exists(filepath):
         voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=filepath))
     else:
         await ctx.send("sound does not exist")
