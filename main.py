@@ -4,7 +4,7 @@ from discord.ext.commands import Bot
 from discord.voice_client import VoiceClient
 import json
 import requests
-from os import path, makedirs, remove
+from os import path, remove
 import asyncio
 from pathlib import Path
 
@@ -23,17 +23,10 @@ def savemp3(file, path):
     with open(path, 'wb') as fd:
         fd.write(file.content)
 
-def doesitexist(filepath, type):
-    if type == 0:
-        if Path(filepath).is_file(): return True
-        else: return False
-    elif type == 1:
-        if Path(filepath).is_dir(): return True
-        else: return False
+path_exists = lambda x: Path(x).exists()
 
-def mkdir(filepath):
-    if not path.isdir(Path(filepath)):
-        makedirs(Path(filepath))
+mkdir = lambda x: Path(x).mkdir(parents=True, exist_ok=True)
+
 # Other functions
 
 # Add and remove sounds
@@ -110,7 +103,7 @@ async def play(ctx, file="", custom_channel=""):
             await asyncio.sleep(1)
     if voice_channel.is_connected():
         await voice_channel.disconnect()
-    
+
 
 @bot.event
 async def on_ready():
