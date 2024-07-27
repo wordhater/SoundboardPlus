@@ -7,6 +7,7 @@ import requests
 from os import path, remove
 import asyncio
 from pathlib import Path
+import yt_dlp
 
 with open('config.json') as f:
     vars = json.load(f)
@@ -17,7 +18,15 @@ intents.message_content = True
 
 bot = commands.Bot(command_prefix=".", intents=intents)
 
+# config for yt_dlp
+yt_dlp_options = {
+    'format':'bestaudio',
+    'keepvideo':False,
+    'outtmpl': "tmp/yt_audio",
+}
 # Other functions
+
+
 
 def savemp3(file, path):
     with open(path, 'wb') as fd:
@@ -94,11 +103,19 @@ async def play(ctx, file="", custom_channel=""):
         print("failed to join vc or already in vc")
     server = ctx.message.guild
     voice_channel = server.voice_client
-    filepath = path.join("resources", str(ctx.author), file)
-    if path_exists(filepath):
-        voice_channel.play(discord.FFmpegPCMAudio(executable="ffmpeg", source=filepath))
+    # change to use regex for better reliability at some point
+    if file.startswith("http"):
+        await ctx.send("attempting to play youtube video")
+        async with ctx.typing():
+            yt_dlp.YoutubeDL(yt_dlp_options).download(file)
+            voice_channel.play(discord.FFmpegPCMAudio(executable=vars['FFMPEG_PATH'], source="tmp/yt_audio"))
+            ctx.send("playing audio from youtube")
     else:
-        await ctx.send("sound does not exist")
+        filepath = path.join("resources", str(ctx.author), file)
+        if path_exists(filepath):
+            voice_channel.play(discord.FFmpegPCMAudio(executable=vars['FFMPEG_PATH'], source=filepath))
+        else:
+            await ctx.send("sound does not exist")
     while voice_channel.is_playing():
             await asyncio.sleep(1)
     if voice_channel.is_connected():

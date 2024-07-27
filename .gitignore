@@ -2,7 +2,8 @@
 notes.md
 .venv
 config.json
-resources
+tmp/*
+resources/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
