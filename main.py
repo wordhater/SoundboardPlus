@@ -108,9 +108,11 @@ async def play(ctx, file="", custom_channel=""):
         await ctx.send("attempting to play youtube video")
         async with ctx.typing():
             remove("tmp/yt_audio")
-            yt_dlp.YoutubeDL(yt_dlp_options).download(file)
-            ctx.send("playing audio from youtube")
-            voice_channel.play(discord.FFmpegPCMAudio(executable=vars['FFMPEG_PATH'], source="tmp/yt_audio"))
+            if yt_dlp.YoutubeDL(yt_dlp_options).download(file) != 0:
+                await ctx.send("failed to download youtube video")
+            else:
+                voice_channel.play(discord.FFmpegPCMAudio(executable=vars['FFMPEG_PATH'], source="tmp/yt_audio"))
+                await ctx.send("playing audio from youtube")
             
     else:
         filepath = path.join("resources", str(ctx.author), file)
