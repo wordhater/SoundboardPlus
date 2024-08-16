@@ -56,7 +56,7 @@ async def addsound(ctx, name="", url=""):
                     mkdir(path.join("resources", str(ctx.author)))
                 down_path = path.join("resources", str(ctx.author), name)
                 try:
-                    if not "./.." in down_path:
+                    if not "/" in down_path:
                         with open(Path("tmp/yt_audio"), 'rb') as file:
                             savemp3(file, down_path)
                     else:
@@ -73,7 +73,7 @@ async def addsound(ctx, name="", url=""):
             mkdir(path.join("resources", str(ctx.author)))
         down_path = path.join("resources", str(ctx.author), name)
         try:
-            if not "./.." in down_path:
+            if not "/" in down_path:
                 savemp3(file, down_path)
             else:
                 await ctx.send("Unexpected error occurred while saving file")
@@ -85,7 +85,7 @@ async def addsound(ctx, name="", url=""):
             help="Removes existing sounds from your sounds. Usage: .removesound [name]")
 async def removesound(ctx, name=""):
     filepath = path.join("resources", str(ctx.author), name)
-    if not "./.." in filepath:
+    if not "/" in filepath:
         remove(filepath)
     else:
         await ctx.send("Failed to remove file")
