@@ -42,10 +42,29 @@ mkdir = lambda x: Path(x).mkdir(parents=True, exist_ok=True)
 @bot.command(brief='Stores audio for later use in soundboard',
             description='Stores attached audio for later use in soundboard with .play \nUsage: .addsound [soundname] [url (only if from youtube)] \nNote that sound names cannot contain spaces',
             help="Stores audio for later use in soundboard.")
-async def addsound(ctx, name=""):
+async def addsound(ctx, name="", url=""):
     print(ctx)
     print(ctx.message.attachments)
-    if len(ctx.message.attachments) < 1:
+    if url.startswith("http"):
+        await ctx.send("attempting to play youtube video")
+        async with ctx.typing():
+            remove("tmp/yt_audio")
+            if yt_dlp.YoutubeDL(yt_dlp_options).download(url) != 0:
+                await ctx.send("failed to download youtube video")
+            else:
+                if not path_exists(path.join("resources", str(ctx.author))):
+                    mkdir(path.join("resources", str(ctx.author)))
+                down_path = path.join("resources", str(ctx.author), name)
+                try:
+                    if not "./.." in down_path:
+                        with open(Path("tmp/yt_audio"), 'rb') as file:
+                            savemp3(file, down_path)
+                    else:
+                        await ctx.send("Unexpected error occurred while saving file")
+                except:
+                    await ctx.send("Unexpected error occurred while saving file")
+                await ctx.send(f"Saved youtube video under name: {name}")
+    elif len(ctx.message.attachments) < 1:
         await ctx.send("No files supplied")
     else:
         await ctx.send("Processing files")
