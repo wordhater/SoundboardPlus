@@ -8,6 +8,7 @@ from os import path, remove
 import asyncio
 from pathlib import Path
 import yt_dlp
+import shutil
 
 with open('config.json') as f:
     vars = json.load(f)
@@ -56,9 +57,9 @@ async def addsound(ctx, name="", url=""):
                     mkdir(path.join("resources", str(ctx.author)))
                 down_path = path.join("resources", str(ctx.author), name)
                 try:
-                    if not "/" in down_path:
-                        with open(Path("tmp/yt_audio"), 'rb') as file:
-                            savemp3(file, down_path)
+                    if not "/" in name and not "/" in str(ctx.author):
+                        print("saving")
+                        shutil.copyfile(Path("tmp/yt_audio"), down_path)
                     else:
                         await ctx.send("Unexpected error occurred while saving file")
                 except:
@@ -126,7 +127,8 @@ async def play(ctx, file="", args=""):
     if file.startswith("http"):
         await ctx.send("attempting to play youtube video")
         async with ctx.typing():
-            remove("tmp/yt_audio")
+            if path_exists("tmp/yt_audio"):
+                remove("tmp/yt_audio")
             if yt_dlp.YoutubeDL(yt_dlp_options).download(file) != 0:
                 await ctx.send("failed to download youtube video")
             else:
@@ -152,9 +154,10 @@ async def play(ctx, file="", args=""):
         else:
             await ctx.send("sound does not exist")
     while voice_channel.is_playing():
-            await asyncio.sleep(1)
+        await asyncio.sleep(1)
     if voice_channel.is_connected():
         await voice_channel.disconnect()
+    await ctx.message.delete()
 
 # it's a seperate command because it would be annoying to implement
 @bot.command(name='soundsnipe', help='Plays sound in vc your not connected to', description="Usage: .soundsnipe [soundname/url] [channel name(put in quotations if it contains spaces)] [other arguments(loop)]")
@@ -170,7 +173,8 @@ async def soundsnipe(ctx, file="", channelinput="", args=""):
     if file.startswith("http"):
         await ctx.send("attempting to play youtube video")
         async with ctx.typing():
-            remove("tmp/yt_audio")
+            if path_exists("tmp/yt_audio"):
+                remove("tmp/yt_audio")
             if yt_dlp.YoutubeDL(yt_dlp_options).download(file) != 0:
                 await ctx.send("failed to download youtube video")
             else:
