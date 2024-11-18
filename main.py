@@ -14,7 +14,34 @@ with open('config.json') as f:
     vars = json.load(f)
     print(vars)
 
+try:
+    indexfile = open("resources/index.json", 'r')
+    fileindex = json.load(indexfile)
+    indexfile.close()
+except:
+    fileindex = {}
+
+def addtoindex(user=str, name=str):
+    global fileindex
+    if user in fileindex:
+        fileindex[user].append(name)
+    else:
+        fileindex[user] = [name]
+    print(fileindex)
+    indexfile = open("resources/index.json", 'w')
+    indexfile.write(json.dumps(fileindex))
+    indexfile.close()
+
+def rmfromindex(user=str, name=str):
+    global fileindex
+    if user in fileindex:
+        fileindex[user] = [x for x in fileindex[user] if not name]
+        indexfile = open("resources/index.json", 'w')
+        indexfile.write(json.dumps(fileindex))
+        indexfile.close()
+
 intents = discord.Intents.default()
+intents.voice_states = True
 intents.message_content = True
 
 bot = commands.Bot(command_prefix=".", intents=intents)
@@ -47,7 +74,7 @@ async def addsound(ctx, name="", url=""):
     print(ctx)
     print(ctx.message.attachments)
     if url.startswith("http"):
-        await ctx.send("attempting to play youtube video")
+        await ctx.send("attempting to add youtube video to your personal sounds")
         async with ctx.typing():
             remove("tmp/yt_audio")
             if yt_dlp.YoutubeDL(yt_dlp_options).download(url) != 0:
@@ -60,6 +87,7 @@ async def addsound(ctx, name="", url=""):
                     if not "/" in name and not "/" in str(ctx.author):
                         print("saving")
                         shutil.copyfile(Path("tmp/yt_audio"), down_path)
+                        addtoindex(str(ctx.author), name)
                     else:
                         await ctx.send("Unexpected error occurred while saving file")
                 except:
@@ -74,8 +102,9 @@ async def addsound(ctx, name="", url=""):
             mkdir(path.join("resources", str(ctx.author)))
         down_path = path.join("resources", str(ctx.author), name)
         try:
-            if not "/" in down_path:
+            if not "/" in name and not "/" in str(ctx.author):
                 savemp3(file, down_path)
+                addtoindex(str(ctx.author), name)
             else:
                 await ctx.send("Unexpected error occurred while saving file")
         except:
@@ -86,8 +115,10 @@ async def addsound(ctx, name="", url=""):
             help="Removes existing sounds from your sounds. Usage: .removesound [name]")
 async def removesound(ctx, name=""):
     filepath = path.join("resources", str(ctx.author), name)
-    if not "/" in filepath:
+    if not "/" in name and not "/" in str(ctx.author):
         remove(filepath)
+        rmfromindex(str(ctx.author), name)
+        await ctx.send(f"Removed sound: \"{name}\"")
     else:
         await ctx.send("Failed to remove file")
 
@@ -119,10 +150,14 @@ async def play(ctx, file="", args=""):
         else:
             channel = ctx.message.author.voice.channel
             await channel.connect()
+            # channel = ctx.message.author.voice.channel
+            # await channel.connect()
     except:
         print("failed to join vc or already in vc")
     server = ctx.message.guild
+    print(server)
     voice_channel = server.voice_client
+    print(voice_channel)
     # change to use regex for better reliability at some point
     if file.startswith("http"):
         await ctx.send("attempting to play youtube video")
@@ -166,7 +201,7 @@ async def soundsnipe(ctx, file="", channelinput="", args=""):
         channel = discord.utils.get(ctx.guild.channels, name=channelinput)
         await channel.connect()
     except:
-        ctx.send("ailed to join vc, there may be an issue with the name of the channel.\nNote that you must use quotations around the name if it contains any spaces. E.g: 'general voice'")
+        ctx.send("Failed to join vc, there may be an issue with the name of the channel.\nNote that you must use quotations around the name if it contains any spaces. E.g: \"general voice\"")
     server = ctx.message.guild
     voice_channel = server.voice_client
     # change to use regex for better reliability at some point
