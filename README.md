@@ -31,4 +31,5 @@ I might make a batch script for windows at some point, for now just look at what
 
 - Warn users if the bot is already playing sounds
 - join vc that message author is not in
+- Fix for newer versions of discord.py as it seems something has changed with how bots join voice channels
 
